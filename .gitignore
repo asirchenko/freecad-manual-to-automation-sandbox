@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+artifacts/*.png
+*.log
+
+# Security — never commit credentials
+*password*
+*credentials*
+Git Password.txt
+.env
