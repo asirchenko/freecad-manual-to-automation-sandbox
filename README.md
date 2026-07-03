@@ -44,6 +44,23 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+## Pulling latest changes
+
+To update your local working copy with the latest changes:
+
+```powershell
+cd D:\Projects\freecad-manual-to-automation-sandbox
+git pull origin main
+```
+
+If you have local uncommitted changes and just want to check for remote
+updates without touching them:
+
+```powershell
+git fetch origin
+git status
+```
+
 ## Verify environment (Week 1)
 
 ```powershell
