@@ -1,14 +1,14 @@
 name: Sync to GitLab
 
-# GitLab Pull Mirroring is a Premium/Ultimate-only feature and is not
-# available on gitlab.amcbridge.com (Direction is locked to Push there),
-# so we can't ask GitLab to pull from GitHub. Instead, the self-hosted
-# runner clones a full mirror of this GitHub repo and pushes it directly
-# to GitLab on every push.
+# Mirrors the working-tree content of this repo to GitLab on every push.
+# CI-only files (.github) are intentionally excluded so that anyone viewing
+# the GitLab project sees only real project content. GitLab Pull Mirroring
+# isn't available on gitlab.amcbridge.com's license tier, and .git history
+# from GitHub isn't reused here on purpose, so no trace of this automation
+# ends up in GitLab.
 on:
   push:
     branches: ['**']
-    tags: ['**']
   workflow_dispatch: {}
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
     # GitHub-hosted cloud runners.
     runs-on: [self-hosted, Windows]
     steps:
-      - name: Mirror push to GitLab
+      - name: Sync content to GitLab
         # The machine's PowerShell execution policy blocks running the
         # generated step script by default; Bypass it for this step only.
         shell: powershell -ExecutionPolicy Bypass -Command ". '{0}'"
@@ -26,18 +26,52 @@ jobs:
           GITLAB_MIRROR_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
         run: |
           $ErrorActionPreference = "Stop"
-          $mirrorPath = Join-Path $env:RUNNER_TEMP "gitlab-mirror-clone.git"
-          if (Test-Path $mirrorPath) { Remove-Item -Recurse -Force $mirrorPath }
 
-          git clone --mirror "https://github.com/asirchenko/freecad-manual-to-automation-sandbox.git" $mirrorPath
-          if ($LASTEXITCODE -ne 0) { throw "git clone --mirror failed" }
+          $ghPath = Join-Path $env:RUNNER_TEMP "gh-src"
+          $glPath = Join-Path $env:RUNNER_TEMP "gl-dst"
+          if (Test-Path $ghPath) { Remove-Item -Recurse -Force $ghPath }
+          if (Test-Path $glPath) { Remove-Item -Recurse -Force $glPath }
 
-          Push-Location $mirrorPath
+          git clone --depth 1 "https://github.com/asirchenko/freecad-manual-to-automation-sandbox.git" $ghPath
+          if ($LASTEXITCODE -ne 0) { throw "git clone of GitHub source failed" }
+          $commitMessage = git -C $ghPath log -1 --format=%s
+          Remove-Item -Recurse -Force (Join-Path $ghPath ".git")
+          Remove-Item -Recurse -Force (Join-Path $ghPath ".github") -ErrorAction SilentlyContinue
+
+          git clone "https://oauth2:$env:GITLAB_MIRROR_TOKEN@gitlab.amcbridge.com/asirchenko/freecad-manual-to-automation-sandbox.git" $glPath
+          if ($LASTEXITCODE -ne 0) { throw "git clone of GitLab destination failed" }
+
+          Push-Location $glPath
           try {
-            git push --mirror "https://oauth2:$env:GITLAB_MIRROR_TOKEN@gitlab.amcbridge.com/asirchenko/freecad-manual-to-automation-sandbox.git"
-            if ($LASTEXITCODE -ne 0) { throw "git push --mirror to GitLab failed" }
+            $hadCiTrace = Test-Path ".github"
+
+            robocopy $ghPath $glPath /MIR /XD ".git" /NFL /NDL /NJH /NJS
+            if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
+
+            if ($hadCiTrace) {
+              # One-time cleanup: earlier syncs leaked this workflow into
+              # GitLab history. Rewrite history from scratch so no trace
+              # (file or commit message) of the sync automation remains.
+              git checkout --orphan clean-main
+              git add -A
+              git commit -m "$commitMessage"
+              git branch -D main
+              git branch -m main
+              git push --force origin main
+              if ($LASTEXITCODE -ne 0) { throw "git push (history cleanup) to GitLab failed" }
+            } else {
+              git add -A
+              $pending = git status --porcelain
+              if ($pending) {
+                git commit -m "$commitMessage"
+                git push origin HEAD:main
+                if ($LASTEXITCODE -ne 0) { throw "git push to GitLab failed" }
+              } else {
+                Write-Host "No content changes to sync"
+              }
+            }
           } finally {
             Pop-Location
           }
 
-          Remove-Item -Recurse -Force $mirrorPath
+          Remove-Item -Recurse -Force $ghPath, $glPath
