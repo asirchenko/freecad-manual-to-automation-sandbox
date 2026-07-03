@@ -1,0 +1,43 @@
+name: Sync to GitLab
+
+# GitLab Pull Mirroring is a Premium/Ultimate-only feature and is not
+# available on gitlab.amcbridge.com (Direction is locked to Push there),
+# so we can't ask GitLab to pull from GitHub. Instead, the self-hosted
+# runner clones a full mirror of this GitHub repo and pushes it directly
+# to GitLab on every push.
+on:
+  push:
+    branches: ['**']
+    tags: ['**']
+  workflow_dispatch: {}
+
+jobs:
+  sync-to-gitlab:
+    # gitlab.amcbridge.com only resolves inside the AMC corporate network,
+    # so this must run on the self-hosted runner on the AMC laptop, not
+    # GitHub-hosted cloud runners.
+    runs-on: [self-hosted, Windows]
+    steps:
+      - name: Mirror push to GitLab
+        # The machine's PowerShell execution policy blocks running the
+        # generated step script by default; Bypass it for this step only.
+        shell: powershell -ExecutionPolicy Bypass -Command ". '{0}'"
+        env:
+          GITLAB_MIRROR_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $mirrorPath = Join-Path $env:RUNNER_TEMP "gitlab-mirror-clone.git"
+          if (Test-Path $mirrorPath) { Remove-Item -Recurse -Force $mirrorPath }
+
+          git clone --mirror "https://github.com/asirchenko/freecad-manual-to-automation-sandbox.git" $mirrorPath
+          if ($LASTEXITCODE -ne 0) { throw "git clone --mirror failed" }
+
+          Push-Location $mirrorPath
+          try {
+            git push --mirror "https://oauth2:$env:GITLAB_MIRROR_TOKEN@gitlab.amcbridge.com/asirchenko/freecad-manual-to-automation-sandbox.git"
+            if ($LASTEXITCODE -ne 0) { throw "git push --mirror to GitLab failed" }
+          } finally {
+            Pop-Location
+          }
+
+          Remove-Item -Recurse -Force $mirrorPath
