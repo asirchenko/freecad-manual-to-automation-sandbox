@@ -1,11 +1,11 @@
 name: Sync to GitLab
 
-# Mirrors the working-tree content of this repo to GitLab on every push.
-# CI-only files (.github) are intentionally excluded so that anyone viewing
-# the GitLab project sees only real project content. GitLab Pull Mirroring
-# isn't available on gitlab.amcbridge.com's license tier, and .git history
-# from GitHub isn't reused here on purpose, so no trace of this automation
-# ends up in GitLab.
+# Mirrors the current working-tree content of this repo to GitLab on every
+# push, as a single squashed commit with a fixed, neutral message. CI-only
+# files (.github) are excluded and GitHub's git history/commit messages are
+# never reused, so nothing about this automation is visible in GitLab.
+# GitLab Pull Mirroring isn't available on gitlab.amcbridge.com's license
+# tier, hence pushing directly from a self-hosted runner instead.
 on:
   push:
     branches: ['**']
@@ -27,59 +27,30 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
-          $ghPath = Join-Path $env:RUNNER_TEMP "gh-src"
-          $glPath = Join-Path $env:RUNNER_TEMP "gl-dst"
-          if (Test-Path $ghPath) { Remove-Item -Recurse -Force $ghPath }
-          if (Test-Path $glPath) { Remove-Item -Recurse -Force $glPath }
+          $srcPath = Join-Path $env:RUNNER_TEMP "gh-src"
+          if (Test-Path $srcPath) { Remove-Item -Recurse -Force $srcPath }
 
-          git clone --depth 1 "https://github.com/asirchenko/freecad-manual-to-automation-sandbox.git" $ghPath
+          git clone --depth 1 "https://github.com/asirchenko/freecad-manual-to-automation-sandbox.git" $srcPath
           if ($LASTEXITCODE -ne 0) { throw "git clone of GitHub source failed" }
-          # Use a fixed, neutral message rather than the GitHub commit
-          # subject, so GitLab history never reflects GitHub-side activity.
-          $commitMessage = "Sync current project state"
-          Remove-Item -Recurse -Force (Join-Path $ghPath ".git")
-          Remove-Item -Recurse -Force (Join-Path $ghPath ".github") -ErrorAction SilentlyContinue
 
-          git clone "https://oauth2:$env:GITLAB_MIRROR_TOKEN@gitlab.amcbridge.com/asirchenko/freecad-manual-to-automation-sandbox.git" $glPath
-          if ($LASTEXITCODE -ne 0) { throw "git clone of GitLab destination failed" }
+          Remove-Item -Recurse -Force (Join-Path $srcPath ".git")
+          Remove-Item -Recurse -Force (Join-Path $srcPath ".github") -ErrorAction SilentlyContinue
 
-          Push-Location $glPath
+          Push-Location $srcPath
           try {
+            git init -q
             # The runner service account (NETWORK SERVICE) has no git
-            # identity of its own; set one locally for this clone so
-            # `git commit` below doesn't fail.
+            # identity of its own; set one locally so `git commit` works.
             git config user.name "Artem Sirchenko"
             git config user.email "asirchenko@amcbridge.com"
+            git add -A
+            git commit -q -m "Sync current project state"
+            if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
 
-            $hadCiTrace = Test-Path ".github"
-
-            robocopy $ghPath $glPath /MIR /XD ".git" /NFL /NDL /NJH /NJS
-            if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
-
-            if ($hadCiTrace) {
-              # One-time cleanup: earlier syncs leaked this workflow into
-              # GitLab history. Rewrite history from scratch so no trace
-              # (file or commit message) of the sync automation remains.
-              git checkout --orphan clean-main
-              git add -A
-              git commit -m "$commitMessage"
-              git branch -D main
-              git branch -m main
-              git push --force origin main
-              if ($LASTEXITCODE -ne 0) { throw "git push (history cleanup) to GitLab failed" }
-            } else {
-              git add -A
-              $pending = git status --porcelain
-              if ($pending) {
-                git commit -m "$commitMessage"
-                git push origin HEAD:main
-                if ($LASTEXITCODE -ne 0) { throw "git push to GitLab failed" }
-              } else {
-                Write-Host "No content changes to sync"
-              }
-            }
+            git push --force "https://oauth2:$env:GITLAB_MIRROR_TOKEN@gitlab.amcbridge.com/asirchenko/freecad-manual-to-automation-sandbox.git" HEAD:main
+            if ($LASTEXITCODE -ne 0) { throw "git push to GitLab failed" }
           } finally {
             Pop-Location
           }
 
-          Remove-Item -Recurse -Force $ghPath, $glPath
+          Remove-Item -Recurse -Force $srcPath
