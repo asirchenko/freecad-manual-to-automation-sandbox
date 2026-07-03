@@ -43,6 +43,12 @@ jobs:
 
           Push-Location $glPath
           try {
+            # The runner service account (NETWORK SERVICE) has no git
+            # identity of its own; set one locally for this clone so
+            # `git commit` below doesn't fail.
+            git config user.name "Artem Sirchenko"
+            git config user.email "asirchenko@amcbridge.com"
+
             $hadCiTrace = Test-Path ".github"
 
             robocopy $ghPath $glPath /MIR /XD ".git" /NFL /NDL /NJH /NJS
