@@ -1,4 +1,4 @@
-# FreeCAD Manual-to-Automation Sandbox
+# FreeCAD Manual-to-Automation Sandbox (Draft)
 
 Desktop automation sandbox for the QAE Transformation program.
 
