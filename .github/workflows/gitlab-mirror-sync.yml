@@ -34,7 +34,9 @@ jobs:
 
           git clone --depth 1 "https://github.com/asirchenko/freecad-manual-to-automation-sandbox.git" $ghPath
           if ($LASTEXITCODE -ne 0) { throw "git clone of GitHub source failed" }
-          $commitMessage = git -C $ghPath log -1 --format=%s
+          # Use a fixed, neutral message rather than the GitHub commit
+          # subject, so GitLab history never reflects GitHub-side activity.
+          $commitMessage = "Sync current project state"
           Remove-Item -Recurse -Force (Join-Path $ghPath ".git")
           Remove-Item -Recurse -Force (Join-Path $ghPath ".github") -ErrorAction SilentlyContinue
 
