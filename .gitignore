@@ -2,6 +2,7 @@ venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+.kilo/
 # Runtime test screenshots — week01 evidence is tracked in git
 artifacts/**/*.png
 !artifacts/week01/

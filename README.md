@@ -17,6 +17,7 @@ A standalone Python project for learning and building UI automation around FreeC
 - `baselines/` — viewport baseline images (Week 15+)
 - `artifacts/` — runtime screenshots (gitignored)
 - `week02_python/` — Python exercises (Week 2)
+- `week03_python/` — Week 3 notes and pytest guide
 
 ## Python version note
 
@@ -84,8 +85,11 @@ freecad-manual-to-automation-sandbox/
 ├── models/
 ├── baselines/
 ├── artifacts/
-├── docs/ai-evidence/
+├── docs/
+│   ├── PROGRESS.md       # Week-by-week progress log
+│   └── ai-evidence/
 ├── week02_python/
+├── week03_python/
 ├── hello.py              # Week 1 sanity check
 ├── pytest.ini
 └── requirements.txt
@@ -101,11 +105,15 @@ GitHub Actions workflow added in **Week 17**. Full FreeCAD UI tests may require 
 
 ## Program status
 
+See **[docs/PROGRESS.md](docs/PROGRESS.md)** for the full week-by-week log.
+
 | Week | Topic | Status |
 |------|-------|--------|
-| 1 | Environment Setup | Verified locally |
-| 2–3 | Python fundamentals | Pending |
-| 4–5 | Pywinauto fundamentals | Pending |
+| 1 | Environment Setup | Done |
+| 2 | Python Part 1 | Done |
+| 3 | Python Part 2 (pytest basics) | Done |
+| 4 | Pywinauto Part 1 | Done |
+| 5 | Pywinauto Part 2 | Done |
 
 ## License
 
