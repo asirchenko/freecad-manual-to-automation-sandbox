@@ -114,6 +114,7 @@ See **[docs/PROGRESS.md](docs/PROGRESS.md)** for the full week-by-week log.
 | 3 | Python Part 2 (pytest basics) | Done |
 | 4 | Pywinauto Part 1 | Done |
 | 5 | Pywinauto Part 2 | Done |
+| 6 | Git Fundamentals | Done |
 
 ## License
 
