@@ -2,7 +2,10 @@ venv/
 __pycache__/
 *.pyc
 .pytest_cache/
-artifacts/*.png
+# Runtime test screenshots — week01 evidence is tracked in git
+artifacts/**/*.png
+!artifacts/week01/
+!artifacts/week01/**
 *.log
 
 # Security — never commit credentials
