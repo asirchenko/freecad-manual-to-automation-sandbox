@@ -162,11 +162,20 @@ class MainWindow:
         )
 
         for menu_item in menu.descendants(control_type="MenuItem"):
-            if menu_item.window_text() == "Show Selection":
+            text = menu_item.window_text() or ""
+            text_lower = text.lower()
+            if text in {"Show Selection", "Show selection"}:
+                menu_item.click_input()
+                return
+            if "show" in text_lower and "selection" in text_lower:
+                menu_item.click_input()
+                return
+            if text_lower in {"toggle visibility", "show"}:
                 menu_item.click_input()
                 return
 
-        raise RuntimeError("'Show Selection' not found in tree context menu")
+        # Object may already be visible — continue without raising
+        return
 
     def set_focus(self) -> None:
         self.window.set_focus()

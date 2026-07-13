@@ -34,3 +34,14 @@ def assert_box_dimensions(
     assert_dimension_close(x_length, expected_x, abs_tolerance=abs_tolerance, label="X length")
     assert_dimension_close(y_length, expected_y, abs_tolerance=abs_tolerance, label="Y length")
     assert_dimension_close(z_length, expected_z, abs_tolerance=abs_tolerance, label="Z length")
+
+
+def assert_volume_close(
+    actual: float,
+    expected: float,
+    *,
+    abs_tolerance: float = 0.1,
+    label: str = "volume",
+) -> None:
+    assert_dimension_close(actual, expected, abs_tolerance=abs_tolerance, label=label)
+

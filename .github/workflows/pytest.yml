@@ -1,0 +1,30 @@
+name: Desktop Sandbox Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Smoke tests (no FreeCAD GUI)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit and API tests
+        run: |
+          pytest tests/junior/test_00_basics.py tests/junior/test_04_tolerance_check.py -v
+          pytest tests/middle/test_03_cad_api.py tests/middle/test_04_geometry_validation.py -v
+
+  # Full FreeCAD UI tests require a local/self-hosted Windows runner with FreeCAD installed.
+  # Run locally: pytest tests/ -v

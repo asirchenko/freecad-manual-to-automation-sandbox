@@ -9,11 +9,11 @@ Desktop automation sandbox for the QAE Desktop Transformation program.
 
 Python project for UI automation around FreeCAD:
 
-- `framework/` — launchers, page objects, assertions
-- `tests/junior/` — J1–J5 test cases
-- `tests/middle/` — M1–M6 placeholders (Middle track)
+- `framework/` — launchers, page objects, assertions, config
+- `tests/junior/` — J1–J5 (23 tests)
+- `tests/middle/` — M1–M6 (17 tests)
 - `models/` — prepared `.FCStd` test models
-- `baselines/` — viewport baseline images (Middle track)
+- `baselines/` — viewport baseline images (M5)
 - `artifacts/` — runtime screenshots (gitignored except `artifacts/week01/`)
 
 ## Prerequisites
@@ -35,48 +35,46 @@ python hello.py
 pytest --collect-only
 ```
 
-## Run Junior tests
+## Run tests
 
-GUI tests need a local FreeCAD install. Unit and API tests run without GUI.
+GUI tests need FreeCAD installed locally.
 
 ```powershell
 venv\Scripts\activate
 
-# Smoke (no GUI)
-pytest tests/junior/test_00_basics.py tests/junior/test_04_tolerance_check.py -v
+# CI smoke (no GUI)
+pytest tests/junior/test_00_basics.py tests/junior/test_04_tolerance_check.py tests/middle/test_03_cad_api.py tests/middle/test_04_geometry_validation.py -v
 
-# Full junior suite — 23 tests
-pytest tests/junior/ -v
+# Full suite — 40 tests
+pytest tests/ -v
 ```
 
-## Junior test map
+## Test map
 
-| Task | File | Tests | GUI |
-|------|------|-------|-----|
-| — | `test_00_basics.py` | 7 | No |
-| J1 | `test_01_launch_freecad.py` | 6 | Yes |
-| J2 | `test_02_create_document.py` | 3 | Yes |
-| J3 | `test_03_viewport_screenshot.py` | 3 | Yes |
-| J4 | `test_04_tolerance_check.py` | 3 | No |
-| J5 | `test_05_e2e_junior.py` | 1 | Partial |
+| Track | Tests | GUI |
+|-------|-------|-----|
+| Junior J1–J5 + basics | 23 | Partial |
+| Middle M1–M6 | 17 | Partial |
 
-Evidence summary: `docs/junior/JUNIOR_EVIDENCE.md`  
-Anti-patterns review: `docs/junior/ANTI_PATTERNS_REVIEW.md`
+Evidence: `docs/junior/JUNIOR_EVIDENCE.md`, `docs/middle/MIDDLE_EVIDENCE.md`
 
-## FreeCAD automation approach
+## Automation approach
 
 | Layer | Tool | Use for |
 |-------|------|---------|
-| UI shell | Pywinauto (`uia`) | Launch, menus, viewport screenshots |
-| Native dialogs | Pywinauto (`win32`) | Save As and other `#32770` dialogs |
-| Geometry / files | FreeCAD Python API (`freecadcmd`) | Cubes, tolerance, `.FCStd` |
-| Orchestration | Pytest + fixtures | Test isolation, setup/teardown |
+| UI shell | Pywinauto (`uia`) | Launch, menus, Preferences panel, viewport |
+| Native dialogs | Pywinauto (`win32`) | Save As (`#32770`) |
+| Geometry / files | FreeCAD Python API | Cubes, tolerance, `.FCStd` |
+| Screenshots | Pillow | File checks + baseline compare (M5) |
+| Orchestration | Pytest + fixtures | Isolated tests |
 
-Qt controls are not always visible to UIA. Verify with Inspect or `scripts/py_inspect_tree.py` before assuming menu-only automation works.
+## CI/CD
+
+GitHub Actions workflow `.github/workflows/pytest.yml` runs smoke tests on push. Full UI suite runs locally — see `docs/cicd/CI_NOTES.md`.
 
 ## Debugging
 
-See `docs/debugging/DEBUGGING_CHECKLIST.md`. Logs: `artifacts/logs/sandbox.log` (runtime, gitignored).
+`docs/debugging/DEBUGGING_CHECKLIST.md` — logs in `artifacts/logs/sandbox.log` (runtime, gitignored).
 
 ## License
 

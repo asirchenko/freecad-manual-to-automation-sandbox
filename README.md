@@ -176,6 +176,24 @@ See **[docs/PROGRESS.md](docs/PROGRESS.md)** for the full week-by-week log.
 | 9 | Create Tests J5 E2E (Junior track complete) | Done |
 | 10 | Debugging Tools | Done |
 | 11 | Junior Consolidation | Done |
+| 12 | Junior SME Review | Done |
+| 13 | M1 Preferences | Done |
+| 14 | M3 CAD API | Done |
+| 15 | M4 + M5 Baselines | Done |
+| 16 | M2 Stability | Done |
+| 17 | CI/CD | Done |
+| 18 | M6 E2E + AI | Done |
+
+## Run Middle tests (M1–M6)
+
+```powershell
+venv\Scripts\activate
+pytest tests/middle/test_03_cad_api.py tests/middle/test_04_geometry_validation.py -v
+pytest tests/middle/ -v
+pytest tests/ -v
+```
+
+Expected: 17 middle tests; **40 total** with junior suite.
 
 ## License
 

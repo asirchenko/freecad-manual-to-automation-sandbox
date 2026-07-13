@@ -397,19 +397,46 @@ Expected: 10 + 23 passed (23 total when running full suite once).
 
 ---
 
-## Weeks 12–20
+## Week 12 — Junior SME Review
 
-See `Plan.md` in the parent Sandbox folder for the full schedule.  
-Update this file when each week is started or completed.
+**Status:** Done  
+**Deliverables:** SME sign-off checklist in `week12_junior_review/README.md`; junior evidence unchanged from Week 11.
+
+---
+
+## Weeks 13–18 — Middle Track
+
+**Status:** Done  
+
+| Week | Deliverables |
+|------|--------------|
+| 13 | `framework/ui/preferences.py`, `test_01_preferences.py` (M1) |
+| 14 | `test_03_cad_api.py`, `models/middle_api_box.FCStd` (M3) |
+| 15 | `test_04`, `test_05`, `baselines/viewport_sample_box_front.png`, baseline compare in `image_assertions.py` (M4, M5) |
+| 16 | `test_02_dialog_stability.py`, `flakiness-preferences.md` (M2) |
+| 17 | `framework/config.py`, `.github/workflows/pytest.yml`, `docs/cicd/CI_NOTES.md` |
+| 18 | `test_06_e2e_middle.py`, `docs/ai-evidence/`, `docs/middle/MIDDLE_EVIDENCE.md` |
+
+---
+
+## Weeks 12–20
 
 | Week | Topic | Status |
 |------|-------|--------|
-| 4 | Pywinauto Part 1 | Done |
-| 5 | Pywinauto Part 2 | Done |
-| 6 | Git Fundamentals | Done |
-| 7 | Create Tests J1–J2 | Done |
-| 8 | Create Tests J3–J4 | Done |
-| 9 | Create Tests J5 E2E | Done |
-| 10 | Debugging Tools | Done |
-| 11 | Junior Consolidation | Done |
-| 13–18 | Middle track M1–M6 + CI/CD + AI | Pending |
+| 12 | Junior SME Review | Done (docs ready) |
+| 13 | M1 Preferences | Done |
+| 14 | M3 CAD API | Done |
+| 15 | M4 Geometry + M5 Baselines | Done |
+| 16 | M2 Dialog Stability | Done |
+| 17 | Config + CI/CD | Done |
+| 18 | M6 E2E + AI Evidence | Done |
+
+### Week 18 verify (full program)
+
+```powershell
+pytest tests/ -v
+```
+
+Expected: **40 passed** (23 junior + 17 middle).
+
+See `Plan.md` in the parent Sandbox folder for schedule reference.

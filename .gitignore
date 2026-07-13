@@ -9,6 +9,7 @@ artifacts/**/*.png
 !artifacts/week01/**
 artifacts/**/*.FCStd
 artifacts/**/*.FCBak
+models/**/*.FCBak
 *.log
 
 # Security — never commit credentials

@@ -113,6 +113,43 @@ App.closeDocument(doc.Name)
         if not dest.exists():
             raise RuntimeError(f"Expected saved copy at {dest}")
 
+    def read_bounding_box_from_model(self, model_path: Path | str) -> tuple[float, float, float]:
+        """Open an FCStd file and return the first Part feature bounding box."""
+        path = Path(model_path).resolve()
+        if not path.exists():
+            raise FileNotFoundError(f"Model not found: {path}")
+        path_posix = str(path).replace("\\", "/")
+
+        script = f"""
+import FreeCAD as App
+
+doc = App.openDocument(r"{path_posix}")
+obj = doc.Objects[0]
+bb = obj.Shape.BoundBox
+print(bb.XLength)
+print(bb.YLength)
+print(bb.ZLength)
+App.closeDocument(doc.Name)
+"""
+        output = self.run_script(script)
+        lines = [line.strip() for line in output.splitlines() if line.strip()]
+        numeric = [line for line in lines if _is_float(line)]
+        if len(numeric) < 3:
+            raise RuntimeError(f"Unexpected freecadcmd output: {output!r}")
+        return float(numeric[-3]), float(numeric[-2]), float(numeric[-1])
+
+    def create_box_in_document(
+        self,
+        output_path: Path | str,
+        length: float,
+        width: float,
+        height: float,
+        *,
+        object_name: str = "MiddleBox",
+    ) -> tuple[float, float, float]:
+        """Create a box in a new document and save (M3)."""
+        return self.create_box_and_save(output_path, length, width, height)
+
 
 def _is_float(value: str) -> bool:
     try:

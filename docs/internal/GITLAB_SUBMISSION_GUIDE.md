@@ -1,8 +1,8 @@
-# GitLab SME Submission Guide (Weeks 1–11)
+# GitLab SME Submission Guide (Weeks 1–18)
 
 **Audience:** CloudCode agent on the AMC Bridge work laptop  
 **Author:** Artem Sirchenko  
-**Purpose:** Submit the sandbox to the assigned GitLab repo as **11 sequential Merge Requests** — one per program week. Each MR must look like normal VS Code + Copilot work, not an AI-assisted learning archive.
+**Purpose:** Submit the sandbox to the assigned GitLab repo as **18 sequential Merge Requests** — one per program week (Weeks 1–18).
 
 **Workflow policy:** **100% manual.** No GitHub Actions sync, no GitLab mirror jobs, no scheduled pulls. Artem (or CloudCode on his instruction) runs every `git pull`, file copy, commit, push, and MR creation by hand in VS Code / terminal.
 
@@ -88,7 +88,7 @@ Expected:
 - HEAD is **`649ef49` or later** (GUI test fixes — see section 4.6)
 - Junior tests `test_00` … `test_05` collect successfully
 - `models/sample_box.FCStd` exists
-- Full suite: **23 passed** (~1 min with FreeCAD GUI tests)
+- Full suite: **40 passed** — 23 junior + 17 middle (~2–3 min with FreeCAD GUI tests)
 
 ---
 
@@ -114,6 +114,13 @@ week08_tests/
 week09_tests/
 week10_debugging/
 week11_consolidation/
+week12_junior_review/
+week13_middle/
+week14_middle/
+week15_middle/
+week16_middle/
+week17_cicd/
+week18_final/
 docs/git-evidence/PR_BODY_WEEK06.md
 docs/git-evidence/README.md
 docs/junior/PR_BODY_WEEK11.md
@@ -703,15 +710,213 @@ Artem
 | GitLab push denied | Check token / SSH key and branch protection rules |
 | Accidentally copied `docs/PROGRESS.md` | `git reset`, remove file, recommit |
 | MR diff too large | Expected for cumulative weeks — MR title/body must explain scope |
-| Full suite not 23 passed | Manually `git pull origin main` in `$LAB`; confirm HEAD >= `649ef49`; rerun `pytest tests/junior/ -v` |
+| Full junior suite not 23 passed | Manually `git pull` in `$LAB`; rerun `pytest tests/junior/ -v` |
+| Full project not 40 passed | `pytest tests/ -v` locally; Middle GUI tests need FreeCAD |
 | Lab repo out of date on AMC | Artem pushes GitHub from home → then manually `git pull` in `C:\work\sandbox-lab` on AMC |
 
 ---
 
-## 11. After Week 11
+## 11. Weeks 12–18 (Middle track + final)
 
-- Week 12: SME review and sign-off on final Junior state
-- Weeks 13+: Middle track — continue in GitHub lab, submit to GitLab using the same pattern (new sections to be added to this guide)
+Same rules as Weeks 1–11: **manual** copy from `$LAB`, cumulative MRs, no lab-only paths (section 4.1).
+
+### Week 12 — Junior SME Review
+
+| Field | Value |
+|-------|-------|
+| **Branch** | `feature/week12-junior-signoff` |
+| **MR title** | `Week 12: Junior track ready for SME sign-off` |
+| **Commit message** | `Confirm junior evidence package for SME review` |
+
+**Include:** no new code required if Weeks 1–11 merged. Optional touch-up:
+
+```
+docs/junior/JUNIOR_EVIDENCE.md
+docs/junior/ANTI_PATTERNS_REVIEW.md
+README.md                                 # final from README.gitlab.md if not done in Week 11
+```
+
+**Verify:** `pytest tests/junior/ -v` → 23 passed.
+
+**MR body:** Request SME sign-off on Junior track; link evidence docs.
+
+---
+
+### Week 13 — M1 Preferences
+
+| Field | Value |
+|-------|-------|
+| **Branch** | `feature/week13-m1-preferences` |
+| **MR title** | `Week 13: Preferences dialog tests (M1)` |
+| **Commit message** | `Add Preferences panel tests and page object` |
+
+**Include:**
+
+```
+framework/ui/preferences.py               # in-window panel on FreeCAD 1.1 — not Windows Settings
+tests/middle/test_01_preferences.py
+```
+
+**Note:** FreeCAD 1.1 opens Preferences **inside the main window** (Edit → Preferences). Do not search desktop windows titled "Settings" — that opens Windows OS Settings.
+
+**Verify:** `pytest tests/middle/test_01_preferences.py -v`
+
+---
+
+### Week 14 — M3 CAD API
+
+| Field | Value |
+|-------|-------|
+| **Branch** | `feature/week14-m3-cad-api` |
+| **MR title** | `Week 14: CAD API geometry tests (M3)` |
+| **Commit message** | `Add middle CAD API tests and saved model` |
+
+**Include:**
+
+```
+framework/app/freecad_api.py              # read_bounding_box_from_model, create_box_in_document
+tests/middle/test_03_cad_api.py
+models/middle_api_box.FCStd
+```
+
+**Verify:** `pytest tests/middle/test_03_cad_api.py -v`
+
+---
+
+### Week 15 — M4 Geometry + M5 Baselines
+
+| Field | Value |
+|-------|-------|
+| **Branch** | `feature/week15-m4-m5-viewport` |
+| **MR title** | `Week 15: Geometry validation and viewport baselines (M4, M5)` |
+| **Commit message** | `Add geometry validation and baseline screenshot compare` |
+
+**Include:**
+
+```
+framework/assertions/geometry_assertions.py   # assert_volume_close
+framework/assertions/image_assertions.py      # assert_image_matches_baseline, image_diff_ratio
+tests/middle/test_04_geometry_validation.py
+tests/middle/test_05_deterministic_viewport.py
+baselines/viewport_sample_box_front.png
+```
+
+**Verify:**
+
+```powershell
+pytest tests/middle/test_04_geometry_validation.py tests/middle/test_05_deterministic_viewport.py -v
+```
+
+If baseline missing on AMC laptop (first time only):
+
+```powershell
+$env:GENERATE_BASELINE = "1"
+pytest tests/middle/test_05_deterministic_viewport.py::test_viewport_matches_baseline -v
+git add baselines/viewport_sample_box_front.png
+```
+
+---
+
+### Week 16 — M2 Dialog Stability
+
+| Field | Value |
+|-------|-------|
+| **Branch** | `feature/week16-m2-stability` |
+| **MR title** | `Week 16: Preferences dialog stability (M2)` |
+| **Commit message** | `Add five-run Preferences stability test` |
+
+**Include:**
+
+```
+framework/config.py                       # stability_run_count, baseline_max_diff_ratio
+tests/middle/test_02_dialog_stability.py
+docs/debugging/flakiness-preferences.md
+```
+
+**Verify:** `pytest tests/middle/test_02_dialog_stability.py -v` → 5 passed
+
+---
+
+### Week 17 — Config + CI/CD
+
+| Field | Value |
+|-------|-------|
+| **Branch** | `feature/week17-cicd` |
+| **MR title** | `Week 17: Project config and CI smoke workflow` |
+| **Commit message** | `Add sandbox config and GitHub Actions smoke tests` |
+
+**Include:**
+
+```
+framework/config.py
+.github/workflows/pytest.yml              # smoke job only — NOT gitlab-mirror-sync.yml
+docs/cicd/CI_NOTES.md
+```
+
+**Do NOT include:** `.github/workflows/gitlab-mirror-sync.yml`, `.github/GITLAB_SYNC_GUIDE.md` (lab automation only).
+
+**Verify:**
+
+```powershell
+pytest tests/junior/test_00_basics.py tests/middle/test_03_cad_api.py -v
+```
+
+Push to GitHub and attach green Actions run screenshot to MR (or run workflow on GitLab if mirrored).
+
+---
+
+### Week 18 — M6 E2E + AI Evidence
+
+| Field | Value |
+|-------|-------|
+| **Branch** | `feature/week18-middle-e2e-ai` |
+| **MR title** | `Week 18: Middle E2E and AI-assisted engineering evidence` |
+| **Commit message** | `Add middle E2E test and AI evidence package` |
+
+**Include:**
+
+```
+tests/middle/test_06_e2e_middle.py
+docs/middle/MIDDLE_EVIDENCE.md
+docs/ai-evidence/README.md
+docs/ai-evidence/AI-J1-test-scenario.md
+docs/ai-evidence/AI-J2-helper-review.md
+docs/ai-evidence/AI-J3-code-explanation.md
+docs/ai-evidence/AI-J4-failure-analysis.md
+README.md                                 # final README.gitlab.md — middle + CI sections
+```
+
+**Verify:**
+
+```powershell
+pytest tests/ -v
+```
+
+Expected: **40 passed** (23 junior + 17 middle).
+
+---
+
+## 12. MR schedule Weeks 12–18
+
+| MR | Program dates | Suggested submit |
+|----|---------------|------------------|
+| Week 12 | Sep 15 – 21 | After Week 11 SME merge |
+| Week 13 | Sep 22 – 28 | +1 week |
+| Week 14 | Sep 29 – Oct 5 | +1 week |
+| Week 15 | Oct 6 – 12 | +1 week |
+| Week 16 | Oct 13 – 19 | +1 week |
+| Week 17 | Oct 20 – 26 | +1 week |
+| Week 18 | Oct 27 – Nov 2 | +1 week (program soft deadline Nov 1) |
+
+---
+
+## 13. Program complete
+
+After Week 18 MR merges:
+
+- Final evidence: `docs/junior/JUNIOR_EVIDENCE.md` + `docs/middle/MIDDLE_EVIDENCE.md` + `docs/ai-evidence/`
+- Full local verify: `pytest tests/ -v` → 40 passed
+- SME final review on GitLab `main`
 
 ---
 
