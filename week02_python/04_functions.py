@@ -1,4 +1,4 @@
-"""Week 2 — Part 4: Functions (функции)."""
+"""Week 2 — Part 4: Functions."""
 
 
 def greet(name: str) -> str:
@@ -23,7 +23,7 @@ def summarize_run(passed: int, failed: int) -> None:
     print(f"Run complete: {passed}/{total} passed, {failed} failed")
 
 
-# --- Вызовы ---
+# --- Calls ---
 print(greet("Artem"))
 print(f"Timeout 30 valid: {is_timeout_valid(30)}")
 print(f"Timeout 200 valid: {is_timeout_valid(200)}")
@@ -32,9 +32,9 @@ summarize_run(passed=3, failed=1)
 
 
 # --- YOUR TURN ---
-# Напишите функцию cube_volume(edge_mm: float) -> float
-# Формула: edge ** 3
-# Проверьте для edge_mm = 10.0 (ожидается 1000.0)
+# Write cube_volume(edge_mm: float) -> float
+# Formula: edge ** 3
+# Test with edge_mm = 10.0 (expected 1000.0)
 
 def cube_volume(edge_mm: float) -> float:
     return edge_mm ** 3

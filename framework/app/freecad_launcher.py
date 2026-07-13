@@ -9,7 +9,10 @@ from pywinauto import Application
 from pywinauto.application import WindowSpecification
 from pywinauto.findwindows import ElementNotFoundError
 
+from framework.utils.logging_config import get_logger
 from framework.utils.waits import wait_for_value
+
+logger = get_logger(__name__)
 
 DEFAULT_FREECAD_EXE = Path(r"C:\Program Files\FreeCAD 1.1\bin\freecad.exe")
 DEFAULT_STARTUP_TIMEOUT_SEC = 90
@@ -38,7 +41,7 @@ class FreeCADLauncher:
     def is_running(self) -> bool:
         return self._app is not None and self._process is not None
 
-    def launch(self) -> Application:
+    def launch(self, open_path: Path | str | None = None) -> Application:
         """Start FreeCAD and connect pywinauto to the process."""
         if self.is_running:
             return self.app
@@ -46,7 +49,15 @@ class FreeCADLauncher:
         if not self.exe_path.exists():
             raise FileNotFoundError(f"FreeCAD executable not found: {self.exe_path}")
 
-        self._process = subprocess.Popen([str(self.exe_path)])
+        command = [str(self.exe_path)]
+        if open_path is not None:
+            model = Path(open_path)
+            if not model.exists():
+                raise FileNotFoundError(f"Model file not found: {model}")
+            command.append(str(model))
+
+        self._process = subprocess.Popen(command)
+        logger.info("Started FreeCAD pid=%s open_path=%s", self._process.pid, open_path)
 
         def connect_to_process() -> Application:
             if self._process is None:
@@ -62,6 +73,7 @@ class FreeCADLauncher:
             poll_interval_sec=2.0,
             error_message="FreeCAD window did not appear",
         )
+        logger.info("Connected to FreeCAD via UIA backend")
         return self._app
 
     def get_main_window(self) -> WindowSpecification:
@@ -83,3 +95,4 @@ class FreeCADLauncher:
 
         self._app = None
         self._process = None
+        logger.info("FreeCAD process closed")

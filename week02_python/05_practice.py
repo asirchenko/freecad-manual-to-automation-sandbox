@@ -1,4 +1,4 @@
-"""Week 2 — Part 5: Combined practice (мини-сценарий)."""
+"""Week 2 — Part 5: Combined practice (mini scenario)."""
 
 from __future__ import annotations
 

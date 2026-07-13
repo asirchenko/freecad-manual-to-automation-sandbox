@@ -1,7 +1,6 @@
-# FreeCAD Manual-to-Automation Sandbox (Draft)
+# FreeCAD Manual-to-Automation Sandbox
 
-Desktop automation sandbox for the QAE Transformation program.
-
+Desktop automation sandbox for the QAE Desktop Transformation program.
 **Track:** Desktop — FreeCAD + Pywinauto + Pytest  
 **Structure:** Appendix B from *Sandbox Desktop Testing* program document  
 **Author:** Artem Sirchenko
@@ -15,7 +14,7 @@ A standalone Python project for learning and building UI automation around FreeC
 - `tests/middle/` — M1–M6 test cases (Weeks 13–18)
 - `models/` — prepared `.FCStd` files (Week 8+)
 - `baselines/` — viewport baseline images (Week 15+)
-- `artifacts/` — runtime screenshots (gitignored)
+- `artifacts/` — runtime screenshots (gitignored); see [docs/ARTIFACTS.md](docs/ARTIFACTS.md)
 - `week02_python/` — Python exercises (Week 2)
 - `week03_python/` — Week 3 notes and pytest guide
 
@@ -69,6 +68,29 @@ Verified packages (Week 1):
 | pywin32 | 312 |
 | pillow | 12.2.0 |
 
+## Run Junior tests (J1–J5)
+
+Requires **FreeCAD** for UI tests (`test_01` … `test_03`, `test_05`). Unit and API tests run without GUI.
+
+```powershell
+venv\Scripts\activate
+
+# Quick smoke (no GUI)
+pytest tests/junior/test_00_basics.py tests/junior/test_04_tolerance_check.py -v
+
+# Full junior suite — 23 tests
+pytest tests/junior/ -v
+```
+
+Standalone scripts (from project root):
+
+```powershell
+python scripts/py_inspect_tree.py --depth 2 --backend uia
+python scripts/capture_freecad_screenshot.py
+```
+
+Evidence and anti-patterns: [docs/junior/JUNIOR_EVIDENCE.md](docs/junior/JUNIOR_EVIDENCE.md), [docs/junior/ANTI_PATTERNS_REVIEW.md](docs/junior/ANTI_PATTERNS_REVIEW.md).
+
 ## Project layout
 
 ```
@@ -87,6 +109,9 @@ freecad-manual-to-automation-sandbox/
 ├── artifacts/
 ├── docs/
 │   ├── PROGRESS.md       # Week-by-week progress log
+│   ├── ARTIFACTS.md      # Files and artifacts per week
+│   ├── debugging/        # Week 10 checklist + root cause docs
+│   ├── junior/           # J1–J5 evidence + anti-patterns (Week 11)
 │   └── ai-evidence/
 ├── week02_python/
 ├── week03_python/
@@ -97,7 +122,20 @@ freecad-manual-to-automation-sandbox/
 
 ## FreeCAD + Qt strategy
 
-FreeCAD is a Qt application. Pywinauto (`uia` backend) handles launch, menus, and dialogs. Geometry validation uses the **FreeCAD Python API**. Pytest fixtures orchestrate setup/teardown.
+Per program **Plan.md** and Appendix B:
+
+| Layer | Tool | Use for |
+|-------|------|---------|
+| UI shell | **Pywinauto** (`uia` for main window) | Launch, menus, toolbar, viewport screenshots |
+| Native dialogs | **Pywinauto** (`win32` where needed) | e.g. Save As `#32770` — see `framework/ui/dialogs.py` |
+| Geometry / files | **FreeCAD Python API** (`freecadcmd`) | Cubes, tolerance, `.FCStd` save when API path is required |
+| Orchestration | **Pytest** + fixtures | Independent tests, setup/teardown |
+
+**Qt caveat (program + our tests):** UIA often does not expose all Qt controls. Do not assume every menu/dialog works via `menu_select` alone — verify with Inspect/py_inspect and prefer keyboard shortcuts or win32 for native Windows dialogs.
+
+**Debugging (Week 10):** [docs/debugging/DEBUGGING_CHECKLIST.md](docs/debugging/DEBUGGING_CHECKLIST.md) — logs in `artifacts/logs/sandbox.log`, VS Code `.vscode/launch.json`.
+
+Official refs: [pywinauto](https://pywinauto.readthedocs.io/), [FreeCAD testing](https://freecad.github.io/DevelopersHandbook/technical/automated_testing.html). Program schedule: parent folder `Plan.md`.
 
 ## CI/CD
 
@@ -115,6 +153,11 @@ See **[docs/PROGRESS.md](docs/PROGRESS.md)** for the full week-by-week log.
 | 4 | Pywinauto Part 1 | Done |
 | 5 | Pywinauto Part 2 | Done |
 | 6 | Git Fundamentals | Done |
+| 7 | Create Tests J1–J2 | Done |
+| 8 | Create Tests J3–J4 | Done |
+| 9 | Create Tests J5 E2E (Junior track complete) | Done |
+| 10 | Debugging Tools | Done |
+| 11 | Junior Consolidation | Done |
 
 ## License
 

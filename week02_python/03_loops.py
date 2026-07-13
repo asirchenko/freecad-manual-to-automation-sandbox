@@ -1,18 +1,18 @@
-"""Week 2 — Part 3: Loops (циклы)."""
+"""Week 2 — Part 3: Loops."""
 
-# --- for по списку строк (списки подробнее в Week 3) ---
+# --- for over a list of strings (lists covered in Week 3) ---
 menu_items = ["File", "Edit", "View", "Tools"]
 
 print("Main menu items:")
 for item in menu_items:
     print(f"  - {item}")
 
-# --- for + range (повторить N раз) ---
+# --- for + range (repeat N times) ---
 print("\nRetry attempts:")
 for attempt in range(1, 4):
     print(f"  Attempt {attempt}/3")
 
-# --- while — ждём условие ---
+# --- while — wait until condition is met ---
 print("\nSimulated wait for window:")
 seconds_left = 3
 while seconds_left > 0:
@@ -20,7 +20,7 @@ while seconds_left > 0:
     seconds_left -= 1
 print("  Window ready")
 
-# --- break — выход из цикла раньше времени ---
+# --- break — exit loop early ---
 print("\nSearch for open document:")
 documents = ["Start", "Start", "Unnamed", "Box"]
 
@@ -31,7 +31,7 @@ for name in documents:
     print(f"  Skipping: {name}")
 
 # --- YOUR TURN ---
-# Выведите числа 1, 2, 3, 4, 5 каждое с новой строки через for + range
+# Print numbers 1–5 on separate lines using for + range
 print("\nCount 1 to 5:")
 for n in range(1, 6):
     print(n)

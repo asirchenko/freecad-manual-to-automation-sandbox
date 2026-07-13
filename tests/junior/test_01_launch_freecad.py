@@ -1,38 +1,14 @@
-"""Week 4–5 — Startup verification, menus, and viewport capture."""
+"""J1 — Startup verification: launch, UI elements, startup screenshot."""
 
 from __future__ import annotations
-
-from collections.abc import Iterator
-
-import pytest
 
 from framework.app.freecad_launcher import FreeCADLauncher
 from framework.assertions.image_assertions import (
     assert_screenshot_dimensions,
     assert_screenshot_not_empty,
 )
-from framework.ui.dialogs import DialogHelper
 from framework.ui.main_window import MainWindow
 from framework.ui.viewport import Viewport
-
-
-@pytest.fixture(scope="module")
-def launched_freecad() -> Iterator[FreeCADLauncher]:
-    """Launch FreeCAD once for all tests in this module."""
-    launcher = FreeCADLauncher()
-    launcher.launch()
-    dialog_helper = DialogHelper(launcher.app)
-    dialog_helper.dismiss_ok_dialog_if_present()
-    yield launcher
-    launcher.close()
-
-
-@pytest.fixture(scope="module")
-def main_window(launched_freecad: FreeCADLauncher) -> MainWindow:
-    window = launched_freecad.get_main_window()
-    main = MainWindow(window)
-    main.wait_ready()
-    return main
 
 
 def test_freecad_process_starts(launched_freecad: FreeCADLauncher) -> None:
@@ -55,9 +31,13 @@ def test_main_window_menu_bar_has_file(main_window: MainWindow) -> None:
     assert main_window.menu_contains("File")
 
 
-def test_capture_main_window_screenshot(main_window: MainWindow) -> None:
+def test_startup_toolbar_has_new_document(main_window: MainWindow) -> None:
+    assert main_window.toolbar_has_button("New Document")
+
+
+def test_j1_startup_screenshot(main_window: MainWindow) -> None:
     viewport = Viewport(main_window)
-    screenshot_path = viewport.capture_to_file("startup_viewport_week5")
+    screenshot_path = viewport.capture_to_file("j1_startup_screenshot")
 
     assert_screenshot_not_empty(screenshot_path)
     assert_screenshot_dimensions(screenshot_path)

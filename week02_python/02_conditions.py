@@ -1,4 +1,4 @@
-"""Week 2 — Part 2: Conditions (условия)."""
+"""Week 2 — Part 2: Conditions."""
 
 test_status = "failed"
 error_message = "Main window not found"
@@ -21,7 +21,7 @@ else:
 
 print(f"Exit code {exit_code} -> {result}")
 
-# --- Сравнения и логика ---
+# --- Comparisons and boolean logic ---
 timeout_sec = 45
 window_visible = True
 
@@ -30,7 +30,7 @@ if timeout_sec >= 30 and window_visible:
 else:
     print("Not ready yet")
 
-# --- Проверка вхождения строки (полезно для заголовков окон) ---
+# --- Substring check (useful for window titles) ---
 window_title = "FreeCAD 1.1.1 - Start"
 
 if "FreeCAD" in window_title:
@@ -39,7 +39,7 @@ else:
     print("Unexpected window")
 
 # --- YOUR TURN ---
-# Напишите условие: если app_version начинается с "1.", вывести "Supported major version"
+# If app_version starts with "1.", print "Supported major version"
 app_version = "1.1.1"
 
 if app_version.startswith("1."):

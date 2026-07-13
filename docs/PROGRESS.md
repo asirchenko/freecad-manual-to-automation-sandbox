@@ -2,7 +2,8 @@
 
 Week-by-week log for the QAE Desktop sandbox (Artem Sirchenko).
 
-**Schedule reference:** parent folder `Plan.md` and *Sandbox Desktop Testing* program document.
+**Schedule reference:** parent folder `Plan.md` and *Sandbox Desktop Testing* program document.  
+**Files and artifacts registry:** [ARTIFACTS.md](ARTIFACTS.md)
 
 ---
 
@@ -215,17 +216,188 @@ gh pr view 1
 
 ## Week 7 — Create Tests Part 1 (J1 + J2)
 
-**Status:** Pending  
-**Dates:** Aug 11 – 17, 2026
+**Status:** Done  
+**Dates:** Aug 11 – 17, 2026 (program)
 
 ### Deliverables
 
-- [ ] Full J1 startup evidence (screenshot)
-- [ ] `test_02_create_document.py` — document creation
+- [x] J1 full startup verification in `test_01_launch_freecad.py` (6 tests)
+- [x] J1 startup screenshot `artifacts/j1_startup_screenshot.png`
+- [x] J2 `test_02_create_document.py` (3 tests)
+- [x] J2 screenshot `artifacts/j2_create_document_screenshot.png`
+- [x] `MainWindow.create_new_document()` and `get_model_tree_items()`
+- [x] Shared UI fixtures moved to `tests/conftest.py`
+- [x] `week07_tests/README.md`
+
+### What was done
+
+- J1: process, window, menu bar, toolbar `New Document`, startup screenshot with Pillow checks
+- J2: create document via toolbar, verify `Unnamed` in title and model tree, screenshot
+- Document creation uses toolbar button (reliable under UIA; File menu less stable on Qt)
+
+### How to verify
+
+```powershell
+venv\Scripts\activate
+pytest tests/junior/test_01_launch_freecad.py -v
+pytest tests/junior/test_02_create_document.py -v
+```
+
+Expected: 6 + 3 = 9 passed (~17s, FreeCAD required).
+
+### Notes
+
+- Screenshots saved to `artifacts/` (gitignored except `week01/`)
 
 ---
 
-## Weeks 8–20
+## Week 8 — Create Tests Part 2 (J3 + J4)
+
+**Status:** Done  
+**Dates:** Aug 18 – 24, 2026 (program)
+
+### Deliverables
+
+- [x] `models/sample_box.FCStd` (10 mm cube)
+- [x] `scripts/create_sample_box.py`
+- [x] `test_03_viewport_screenshot.py` (3 tests)
+- [x] `test_04_tolerance_check.py` (3 tests)
+- [x] `framework/app/freecad_api.py` — headless `freecadcmd` runner
+- [x] `framework/assertions/geometry_assertions.py`
+- [x] Viewport: fit all, front view, model screenshot
+- [x] `week08_tests/README.md`
+
+### What was done
+
+- J3: launch FreeCAD with `sample_box.FCStd`, verify tree, viewport shortcuts, Pillow screenshot
+- J4: create cube via `Part.makeBox` in freecadcmd, tolerance checks with `math.isclose`
+- `FreeCADLauncher.launch(open_path=...)` opens prepared models reliably (UI File dialog avoided)
+
+### How to verify
+
+```powershell
+pytest tests/junior/test_03_viewport_screenshot.py -v
+pytest tests/junior/test_04_tolerance_check.py -v
+```
+
+Expected: 3 + 3 = 6 passed.
+
+### Notes
+
+- J4 runs without GUI (~2.5s); J3 needs local FreeCAD (~10s)
+
+---
+
+## Week 9 — Create Tests Part 3 (J5 E2E)
+
+**Status:** Done  
+**Dates:** Aug 25 – 31, 2026 (program)
+
+### Deliverables
+
+- [x] `test_05_e2e_junior.py` — `test_j5_e2e_junior_flow`
+- [x] `FreeCADApiRunner.create_box_and_save()` and `save_document_copy()`
+- [x] Artifacts: `j5_e2e_geometry.FCStd`, `j5_e2e_saved.FCStd`, `j5_e2e_viewport.png`
+- [x] `week09_tests/README.md`
+
+### What was done
+
+Single E2E test: API geometry + validation → UI launch/open → model tree check → viewport screenshot → API save copy → verify all artifacts.
+
+### How to verify
+
+```powershell
+pytest tests/junior/test_05_e2e_junior.py -v
+```
+
+Expected: 1 passed (~15s).
+
+### Notes
+
+- UI Save As is flaky on Qt; save step uses freecadcmd (documented in week09 README)
+- **Junior track J1–J5 complete**
+
+---
+
+## Week 10 — Debugging Tools
+
+**Status:** Done  
+**Dates:** Sep 1 – 7, 2026 (program)
+
+### Deliverables
+
+- [x] `docs/debugging/DEBUGGING_CHECKLIST.md` — 7-step workflow (docx 6.3)
+- [x] `docs/debugging/save-as-root-cause.md` — root cause doc + fix (Save As / UIA vs win32)
+- [x] `framework/utils/logging_config.py` — file + console logging
+- [x] `framework/utils/ui_inspect.py` — control tree helpers
+- [x] `scripts/py_inspect_tree.py` — py_inspect CLI
+- [x] `.vscode/launch.json` — pytest and script debug configs
+- [x] Logging wired in `freecad_launcher.py`, `dialogs.py`, `conftest.py`
+- [x] `week10_debugging/README.md`
+
+### What was done
+
+- Documented debugging checklist: assertion → locator → trace → screenshots → env → test isolation
+- Root cause write-up for Save As: UIA does not expose `#32770` dialog; fix uses win32 + `Ctrl+Shift+S`
+- Added `artifacts/logs/sandbox.log` output via session autouse fixture in `conftest.py`
+- VS Code launch configs for stepping through tests and `py_inspect_tree.py`
+
+### How to verify
+
+```powershell
+venv\Scripts\activate
+pytest tests/junior/test_00_basics.py -v
+pytest tests/junior/test_01_launch_freecad.py -v -s --log-cli-level=INFO
+python scripts/py_inspect_tree.py --depth 1 --backend uia
+```
+
+Expected: basics pass; UI test logs show `framework.app.freecad_launcher` lines; log file created under `artifacts/logs/`.
+
+### Notes
+
+- `py_inspect_tree.py` requires local FreeCAD (interactive — press Enter to close)
+- Save As fix was implemented during Week 9; Week 10 documents the debugging process formally
+- `scripts/_bootstrap.py` fixes `ModuleNotFoundError: framework` when running scripts directly
+
+---
+
+## Week 11 — Junior Consolidation
+
+**Status:** Done  
+**Dates:** Sep 8 – 14, 2026 (program)
+
+### Deliverables
+
+- [x] `docs/junior/JUNIOR_EVIDENCE.md` — J1–J5 evidence package
+- [x] `docs/junior/ANTI_PATTERNS_REVIEW.md` — self-review (12 items, all pass)
+- [x] `docs/junior/PR_BODY_WEEK11.md` — PR template «Junior cleanup»
+- [x] `README.md` — Junior run instructions, doc links, removed Draft
+- [x] `week11_consolidation/README.md`
+- [ ] GitHub PR «Junior cleanup» (open when ready)
+
+### What was done
+
+- Consolidated Junior documentation: evidence index, anti-patterns sign-off, test run matrix (23 tests)
+- README polish: how to run full junior suite, script notes, `docs/junior/` in layout
+
+### How to verify
+
+```powershell
+venv\Scripts\activate
+pytest tests/junior/test_00_basics.py tests/junior/test_04_tolerance_check.py -v
+pytest tests/junior/ -v
+```
+
+Expected: 10 + 23 passed (23 total when running full suite once).
+
+### Notes
+
+- Week 12: SME review on Junior PR
+- Middle track stubs remain in `tests/middle/` for Week 13+
+
+---
+
+## Weeks 12–20
 
 See `Plan.md` in the parent Sandbox folder for the full schedule.  
 Update this file when each week is started or completed.
@@ -235,7 +407,9 @@ Update this file when each week is started or completed.
 | 4 | Pywinauto Part 1 | Done |
 | 5 | Pywinauto Part 2 | Done |
 | 6 | Git Fundamentals | Done |
-| 7 | Create Tests J1–J2 | Pending |
-| 10 | Debugging Tools | Pending |
-| 11–12 | Junior consolidation & review | Pending |
+| 7 | Create Tests J1–J2 | Done |
+| 8 | Create Tests J3–J4 | Done |
+| 9 | Create Tests J5 E2E | Done |
+| 10 | Debugging Tools | Done |
+| 11 | Junior Consolidation | Done |
 | 13–18 | Middle track M1–M6 + CI/CD + AI | Pending |

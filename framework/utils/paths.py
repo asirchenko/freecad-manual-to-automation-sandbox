@@ -14,3 +14,8 @@ def artifact_path(name: str, extension: str = "png") -> Path:
     """Return a path under artifacts/ and ensure the directory exists."""
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
     return ARTIFACTS_DIR / f"{name}.{extension}"
+
+
+def model_path(filename: str) -> Path:
+    """Return path to a prepared model in models/."""
+    return MODELS_DIR / filename
