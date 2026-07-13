@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from pathlib import Path
 
 from framework.ui.main_window import MainWindow
@@ -10,32 +9,25 @@ from framework.utils.paths import artifact_path
 
 
 class Viewport:
-    """Viewport helpers — keyboard shortcuts when Qt controls are not exposed via UIA."""
+    """Viewport helpers — menu navigation when Qt shortcuts are not exposed via UIA."""
 
     def __init__(self, main_window: MainWindow) -> None:
         self.main_window = main_window
 
     def fit_all(self) -> None:
-        """View -> Fit All via FreeCAD keyboard shortcut (V, F)."""
+        """View -> Standard Views -> Fit All."""
         self.main_window.wait_ready()
-        self.main_window.set_focus()
-        self.main_window.window.type_keys("v")
-        time.sleep(0.3)
-        self.main_window.window.type_keys("f")
-        time.sleep(0.5)
+        self.main_window.select_menu("View->Standard Views->Fit All")
 
     def set_front_view(self) -> None:
-        """Standard views -> Front via keyboard shortcut (V, 1)."""
-        self.main_window.set_focus()
-        self.main_window.window.type_keys("v")
-        time.sleep(0.3)
-        self.main_window.window.type_keys("1")
-        time.sleep(0.5)
+        """View -> Standard Views -> 1 Front."""
+        self.main_window.select_menu("View->Standard Views->1 Front")
 
     def prepare_for_screenshot(self) -> None:
         """Apply a consistent view before capturing."""
         self.fit_all()
         self.set_front_view()
+        self.fit_all()
 
     def capture_to_file(self, name: str, extension: str = "png") -> Path:
         """Capture the main window and save it under artifacts/."""

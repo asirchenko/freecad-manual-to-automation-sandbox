@@ -62,6 +62,7 @@ def test_j5_e2e_junior_flow() -> None:
         assert any("cube" in item.lower() for item in tree_items)
 
         # --- Viewport + screenshot ---
+        main.show_tree_item("Cube")
         viewport = Viewport(main)
         viewport.prepare_for_screenshot()
         captured = viewport.capture_to_file("j5_e2e_viewport")

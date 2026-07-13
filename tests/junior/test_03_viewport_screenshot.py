@@ -21,6 +21,8 @@ def test_sample_box_visible_in_model_tree(model_window: MainWindow) -> None:
 
 
 def test_j3_viewport_screenshot_with_pillow(model_window: MainWindow) -> None:
+    model_window.show_tree_item("box")
+
     viewport = Viewport(model_window)
     screenshot_path = viewport.capture_model_view("j3_viewport_sample_box")
 

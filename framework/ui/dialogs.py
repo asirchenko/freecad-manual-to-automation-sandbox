@@ -20,7 +20,7 @@ class DialogHelper:
 
     SAVE_AS_TITLE = "Save FreeCAD Document"
 
-    def __init__(self, app: Application, main_window: WindowSpecification) -> None:
+    def __init__(self, app: Application, main_window: WindowSpecification | None = None) -> None:
         self.app = app
         self.main_window = main_window
         self._win32_app: Application | None = None
@@ -56,6 +56,9 @@ class DialogHelper:
 
     def open_file_menu(self) -> None:
         """Open the File menu via UIA (Qt-safe)."""
+        if self.main_window is None:
+            raise RuntimeError("DialogHelper requires main_window for menu interaction")
+
         for menu_bar in self.main_window.descendants(control_type="MenuBar"):
             items = [
                 item.window_text()
@@ -73,6 +76,9 @@ class DialogHelper:
 
     def click_file_submenu(self, label_contains: str) -> None:
         """Click a File submenu entry such as 'Save As'."""
+        if self.main_window is None:
+            raise RuntimeError("DialogHelper requires main_window for menu interaction")
+
         label_lower = label_contains.lower()
         wait_until(
             lambda: any(
@@ -92,6 +98,9 @@ class DialogHelper:
 
     def open_save_as_dialog(self) -> None:
         """Open Save As — Ctrl+Shift+S (reliable); File menu as fallback."""
+        if self.main_window is None:
+            raise RuntimeError("DialogHelper requires main_window to open Save As")
+
         self.main_window.set_focus()
         send_keys("^+s")
         time.sleep(1)

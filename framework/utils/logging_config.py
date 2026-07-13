@@ -19,7 +19,7 @@ def setup_logging(
 ) -> logging.Logger:
     """Configure console + optional file logging for sandbox debugging."""
     target = logging.getLogger(logger_name) if logger_name else logging.getLogger()
-    if target.handlers:
+    if getattr(target, "_sandbox_logging_configured", False):
         return target
 
     target.setLevel(level)
@@ -41,6 +41,7 @@ def setup_logging(
         target.addHandler(file_handler)
 
     target.propagate = False
+    target._sandbox_logging_configured = True
     return target
 
 

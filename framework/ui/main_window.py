@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
-from pywinauto import Application
+from pywinauto import Application, Desktop
 from pywinauto.application import WindowSpecification
 
-from framework.utils.waits import wait_until
+from framework.utils.waits import wait_for_value, wait_until
 
 
 class MainWindow:
@@ -52,8 +53,22 @@ class MainWindow:
         return any(item.lower() == menu_name_lower for item in self.get_menu_items())
 
     def select_menu(self, menu_path: str) -> None:
-        """Select a menu path such as 'View' or 'View->Standard views'."""
-        self.window.menu_select(menu_path)
+        """Select a menu path such as 'View' or 'View->Standard Views->Fit All'.
+
+        Clicks through each level manually instead of using pywinauto's
+        built-in menu_select(), which raises IndexError against FreeCAD's
+        Qt menus — likely due to the duplicate/empty MenuBar (see
+        get_menu_items()).
+        """
+        for label in menu_path.split("->"):
+            label = label.strip()
+            for item in self.window.descendants(control_type="MenuItem"):
+                if item.window_text() == label:
+                    item.click_input()
+                    break
+            else:
+                raise RuntimeError(f"Menu item not found: {label}")
+            time.sleep(0.3)
 
     def find_toolbar_button(self, label: str):
         """Find a toolbar button by its visible label."""
@@ -92,6 +107,66 @@ class MainWindow:
 
     def has_open_document(self) -> bool:
         return "Unnamed" in self.title or bool(self.get_model_tree_items())
+
+    def find_tree_item(self, label: str):
+        """Find a model-tree item, preferring an exact label match.
+
+        Falls back to a substring match only if no exact match exists —
+        an object like "Box" would otherwise match its parent document
+        "sample_box" first.
+        """
+        label_lower = label.lower()
+        fallback = None
+        for item in self.window.descendants(control_type="TreeItem"):
+            text = item.window_text()
+            if not text:
+                continue
+            if text.lower() == label_lower:
+                return item
+            if fallback is None and label_lower in text.lower():
+                fallback = item
+
+        if fallback is not None:
+            return fallback
+        raise RuntimeError(f"Tree item not found: {label}")
+
+    def show_tree_item(self, label: str) -> None:
+        """Select a tree item and make it visible via its context menu.
+
+        Objects created headless via freecadcmd are saved without a
+        GuiDocument, so they default to hidden when opened in the GUI.
+        Qt's custom-painted tree view does not respond to the "Space"
+        shortcut sent via UIA, so this uses the right-click "Show
+        Selection" context menu action instead.
+        """
+        item = self.find_tree_item(label)
+        item.click_input()
+        item.click_input(button="right")
+
+        desktop = Desktop(backend="uia")
+
+        def find_context_menu():
+            for window in desktop.windows():
+                try:
+                    if window.element_info.class_name == "QMenu":
+                        return window
+                except Exception:
+                    continue
+            raise RuntimeError("Tree context menu not found")
+
+        menu = wait_for_value(
+            find_context_menu,
+            timeout_sec=5,
+            poll_interval_sec=0.2,
+            error_message="Tree context menu did not appear",
+        )
+
+        for menu_item in menu.descendants(control_type="MenuItem"):
+            if menu_item.window_text() == "Show Selection":
+                menu_item.click_input()
+                return
+
+        raise RuntimeError("'Show Selection' not found in tree context menu")
 
     def set_focus(self) -> None:
         self.window.set_focus()
