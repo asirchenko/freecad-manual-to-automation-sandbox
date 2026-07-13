@@ -7,6 +7,7 @@ from pathlib import Path
 
 from pywinauto import Application, Desktop
 from pywinauto.application import WindowSpecification
+from pywinauto.keyboard import send_keys
 
 from framework.utils.waits import wait_for_value, wait_until
 
@@ -174,8 +175,10 @@ class MainWindow:
                 menu_item.click_input()
                 return
 
-        # Object may already be visible — continue without raising
-        return
+        # Object is already visible — the menu offers "Hide Selection"
+        # instead, which needs no action. Dismiss it so it doesn't swallow
+        # the next click (e.g. the View menu in Viewport.fit_all()).
+        send_keys("{ESC}")
 
     def set_focus(self) -> None:
         self.window.set_focus()
