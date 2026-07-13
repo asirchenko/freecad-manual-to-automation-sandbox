@@ -4,6 +4,8 @@
 **Author:** Artem Sirchenko  
 **Purpose:** Submit the sandbox to the assigned GitLab repo as **11 sequential Merge Requests** — one per program week. Each MR must look like normal VS Code + Copilot work, not an AI-assisted learning archive.
 
+**Workflow policy:** **100% manual.** No GitHub Actions sync, no GitLab mirror jobs, no scheduled pulls. Artem (or CloudCode on his instruction) runs every `git pull`, file copy, commit, push, and MR creation by hand in VS Code / terminal.
+
 ---
 
 ## 1. Two repositories — two roles
@@ -13,7 +15,16 @@
 | **GitHub (lab archive)** | `https://github.com/asirchenko/freecad-manual-to-automation-sandbox` | Full project: learning guides, progress logs, Cursor metadata. **Source of truth for file content.** |
 | **GitLab (SME submission)** | `https://gitlab.amcbridge.com/<group>/<assigned-sandbox>.git` | Assigned AMC repo. **Only official deliverables.** SME reviews MRs here. |
 
-**Do NOT** use the GitHub Actions `gitlab-mirror-sync` workflow for SME submission. That workflow squashes everything into a single neutral commit on `main` and strips `.github/`. SME expects **feature branches + MRs with reviewable history**.
+### 1.1 What is NOT used (automation disabled)
+
+| Automation | Status | Why |
+|------------|--------|-----|
+| `.github/workflows/gitlab-mirror-sync.yml` | **Do not run / ignore** | Squashes to one commit on GitLab `main`; no week-by-week MR history for SME |
+| Self-hosted GitHub Actions runner on AMC laptop | **Not required** | Submission is manual push to GitLab only |
+| GitLab Pull Mirroring from GitHub | **Not available** | Premium feature; was never an option |
+| Auto `git pull` on a schedule | **Not used** | Artem pulls lab updates manually when ready |
+
+SME submission = **manual** `git clone` / `git pull` (lab) → **manual** file copy → **manual** `git commit` + `git push` (GitLab) → **manual** MR in GitLab UI.
 
 Replace `<assigned-sandbox>` with the actual path SME provided (e.g. `asirchenko/freecad-manual-to-automation-sandbox` or a team-assigned name).
 
@@ -35,33 +46,49 @@ python --version
 
 ---
 
-## 3. Initial setup (run once)
+## 3. Initial setup (run once, manually)
 
-### 3.1 Clone both repos
+### 3.1 Clone both repos (one-time)
 
 ```powershell
-# Lab archive (read-only source)
+# Lab archive — source for file copies (GitHub)
 git clone https://github.com/asirchenko/freecad-manual-to-automation-sandbox.git C:\work\sandbox-lab
 cd C:\work\sandbox-lab
 git checkout main
-git pull
 
-# Assigned GitLab repo (submission target)
+# Assigned GitLab repo — submission target (SME)
 git clone https://gitlab.amcbridge.com/<group>/<assigned-sandbox>.git C:\work\sandbox-gitlab
 cd C:\work\sandbox-gitlab
 ```
 
-Set `$LAB  = "C:\work\sandbox-lab"` and `$GL   = "C:\work\sandbox-gitlab"` in your session if helpful.
+Set `$LAB = "C:\work\sandbox-lab"` and `$GL = "C:\work\sandbox-gitlab"` if helpful.
 
-### 3.2 Verify lab archive has Weeks 1–11
+**Later updates (manual only):** when Artem has pushed new work to GitHub from another machine, run on AMC:
 
 ```powershell
 cd C:\work\sandbox-lab
-git log --oneline -15
-pytest tests/junior/ --collect-only
+git fetch origin
+git pull origin main
 ```
 
-Expected: junior tests `test_00` … `test_05` collect successfully; `models/sample_box.FCStd` exists.
+Do this **only when Artem asks** — not on a timer or via any automation.
+
+### 3.2 Verify lab archive (after manual pull)
+
+```powershell
+cd C:\work\sandbox-lab
+git log --oneline -5
+git rev-parse --short HEAD
+pytest tests/junior/ --collect-only
+pytest tests/junior/ -v
+```
+
+Expected:
+
+- HEAD is **`649ef49` or later** (GUI test fixes — see section 4.6)
+- Junior tests `test_00` … `test_05` collect successfully
+- `models/sample_box.FCStd` exists
+- Full suite: **23 passed** (~1 min with FreeCAD GUI tests)
 
 ---
 
@@ -151,6 +178,32 @@ Before every `git push`:
 - [ ] No `Co-authored-by: Cursor` or similar in commit messages
 - [ ] `pytest` for this week's tests passes locally
 - [ ] `git status` is clean after commit
+- [ ] Copied files match **post-fix lab state** (section 4.6) when the week touches GUI/viewport/logging
+
+### 4.6 Critical GUI fixes (lab commit `649ef49`)
+
+The lab repo includes fixes that are **required** for a green junior suite. Always copy the
+**current `main`** versions of affected files — do not use older per-week git snapshots for these paths.
+
+| File | Fix |
+|------|-----|
+| `framework/ui/dialogs.py` | `DialogHelper.__init__` — `main_window` optional (conftest calls `DialogHelper(launcher.app)`) |
+| `framework/ui/main_window.py` | Manual `select_menu()` (no `menu_select`); `find_tree_item()`; `show_tree_item()` for headless models |
+| `framework/ui/viewport.py` | `fit_all` / `set_front_view` via `View->Standard Views` menus, not keyboard `type_keys` |
+| `framework/utils/logging_config.py` | `_sandbox_logging_configured` flag — pytest no longer blocks `sandbox.log` |
+| `scripts/create_sample_box.py` | Output path relative to script, not a hardcoded machine path |
+| `tests/junior/test_03_viewport_screenshot.py` | Calls `show_tree_item("box")` before screenshot |
+| `tests/junior/test_05_e2e_junior.py` | Calls `show_tree_item("Cube")` before viewport capture |
+| `.gitignore` | Includes `artifacts/**/*.FCBak` |
+
+**Why `show_tree_item` matters:** models created via `freecadcmd` open without a GuiDocument and stay
+hidden in the tree. J3/J5 screenshots are empty without making the object visible first.
+
+**Neutral commit message if bundling fixes into Week 8/9 MR:**
+
+```
+Fix menu navigation and hidden model visibility for viewport tests
+```
 
 ---
 
@@ -190,11 +243,11 @@ Each MR is **cumulative**: it contains everything from prior weeks plus this wee
 
 For each week below:
 
-1. `git checkout main && git pull`
-2. `git checkout -b <branch-name>`
-3. Copy files listed under **Include**
+1. **Manually** `git checkout main && git pull` in `$GL` (GitLab repo only)
+2. **Manually** `git checkout -b <branch-name>`
+3. **Manually** copy files listed under **Include** from `$LAB` (use `Copy-WeekFiles` or VS Code / Explorer)
 4. Run **Verify**
-5. `git add` only included paths → commit → push → create MR
+5. **Manually** `git add` → `git commit` → `git push` → create MR in GitLab UI
 
 ---
 
@@ -370,8 +423,8 @@ pytest tests/junior/test_01_launch_freecad.py -v
 **Include:**
 
 ```
-framework/ui/main_window.py
-framework/ui/viewport.py
+framework/ui/main_window.py             # final: manual select_menu() — section 4.6
+framework/ui/viewport.py                # final: menu-based view helpers — section 4.6
 framework/ui/dialogs.py
 framework/assertions/image_assertions.py
 tests/junior/test_01_launch_freecad.py    # full Week 5 version with menu + screenshot tests
@@ -435,6 +488,7 @@ tests/junior/test_01_launch_freecad.py    # J1 full — 6 tests
 tests/junior/test_02_create_document.py
 tests/conftest.py                         # launched_freecad, main_window, document_window fixtures
 framework/ui/main_window.py               # create_new_document, get_model_tree_items
+framework/ui/dialogs.py                   # optional main_window — required for DialogHelper(launcher.app)
 ```
 
 **Verify:**
@@ -457,11 +511,13 @@ pytest tests/junior/test_01_launch_freecad.py tests/junior/test_02_create_docume
 
 ```
 models/sample_box.FCStd
-scripts/create_sample_box.py
+scripts/create_sample_box.py              # relative output path — section 4.6
 framework/app/freecad_api.py
 framework/assertions/geometry_assertions.py
 framework/app/freecad_launcher.py         # open_path support
-tests/junior/test_03_viewport_screenshot.py
+framework/ui/main_window.py               # find_tree_item, show_tree_item — section 4.6
+framework/ui/viewport.py                  # menu-based prepare_for_screenshot — section 4.6
+tests/junior/test_03_viewport_screenshot.py   # includes show_tree_item("box")
 tests/junior/test_04_tolerance_check.py
 tests/conftest.py                         # model_window fixture
 ```
@@ -485,10 +541,11 @@ pytest tests/junior/test_03_viewport_screenshot.py tests/junior/test_04_toleranc
 **Include:**
 
 ```
-tests/junior/test_05_e2e_junior.py
+tests/junior/test_05_e2e_junior.py        # includes show_tree_item("Cube") — section 4.6
 framework/app/freecad_api.py              # create_box_and_save, save_document_copy
-framework/ui/dialogs.py                   # save_document_as (win32)
-framework/ui/main_window.py               # save_document_as wrapper
+framework/ui/dialogs.py                   # save_document_as (win32); optional main_window
+framework/ui/main_window.py             # save_document_as wrapper; show_tree_item
+framework/ui/viewport.py                  # if not already from Week 8
 ```
 
 **Verify:**
@@ -512,7 +569,7 @@ pytest tests/junior/test_05_e2e_junior.py -v
 ```
 docs/debugging/DEBUGGING_CHECKLIST.md
 docs/debugging/save-as-root-cause.md
-framework/utils/logging_config.py
+framework/utils/logging_config.py         # _sandbox_logging_configured flag — section 4.6
 framework/utils/ui_inspect.py
 scripts/_bootstrap.py
 scripts/py_inspect_tree.py
@@ -552,8 +609,10 @@ docs/junior/ANTI_PATTERNS_REVIEW.md
 
 ```powershell
 pytest tests/junior/ -v
-# Expected: 23 passed (FreeCAD required for GUI tests)
+# Expected: 23 passed in ~50–90s (FreeCAD GUI required)
 ```
+
+After Week 11 MR merges, the GitLab repo should match lab `main` at `649ef49+` for all framework/test paths.
 
 ---
 
@@ -569,18 +628,21 @@ Copy it to `README.md` in the GitLab repo. It has no references to PROGRESS, ART
 
 ---
 
-## 8. End-to-end workflow script (CloudCode)
+## 8. End-to-end workflow (manual — CloudCode)
 
-Execute weeks in order. Adjust `$GL` and `$LAB` paths.
+Execute weeks in order. Adjust `$GL` and `$LAB` paths. **Every step is manual** — no CI, no mirror, no background sync.
 
 ```powershell
 $LAB = "C:\work\sandbox-lab"
 $GL  = "C:\work\sandbox-gitlab"
 
+# Optional: refresh lab from GitHub (only when Artem says lab was updated)
+# cd $LAB; git fetch origin; git pull origin main
+
 # Example: Week 7
 cd $GL
 git checkout main
-git pull origin main
+git pull origin main          # GitLab main — manual
 git checkout -b feature/week07-j1-j2-tests
 
 Copy-WeekFiles -LabRoot $LAB -GitLabRoot $GL -RelativePaths @(
@@ -633,10 +695,16 @@ Artem
 | Problem | Action |
 |---------|--------|
 | Week 4/5 `test_01` has too many tests | Check out file from specific lab commit (`65f0190` = Week 4, `ecd4d6b` = Week 5) |
+| `TypeError: DialogHelper.__init__()` missing `main_window` | Copy post-fix `framework/ui/dialogs.py` from lab `main` (section 4.6) |
+| J3/J5 screenshots show empty viewport | Ensure `show_tree_item()` in test + `main_window.py` from section 4.6 |
+| `IndexError` in `menu_select` | Use final `main_window.select_menu()` — manual menu clicks (section 4.6) |
+| `artifacts/logs/sandbox.log` empty under pytest | Copy post-fix `framework/utils/logging_config.py` (section 4.6) |
 | FreeCAD not found | Set path in `freecad_launcher.py` or install from Company Portal |
 | GitLab push denied | Check token / SSH key and branch protection rules |
 | Accidentally copied `docs/PROGRESS.md` | `git reset`, remove file, recommit |
 | MR diff too large | Expected for cumulative weeks — MR title/body must explain scope |
+| Full suite not 23 passed | Manually `git pull origin main` in `$LAB`; confirm HEAD >= `649ef49`; rerun `pytest tests/junior/ -v` |
+| Lab repo out of date on AMC | Artem pushes GitHub from home → then manually `git pull` in `C:\work\sandbox-lab` on AMC |
 
 ---
 

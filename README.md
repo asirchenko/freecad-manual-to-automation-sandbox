@@ -44,12 +44,13 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Pulling latest changes
+## Pulling latest changes (manual)
 
-To update your local working copy with the latest changes:
+Update your local copy **only when you choose** — there is no automatic sync.
 
 ```powershell
-cd D:\Projects\freecad-manual-to-automation-sandbox
+cd <your-clone-path>
+git fetch origin
 git pull origin main
 ```
 
